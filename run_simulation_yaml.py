@@ -34,9 +34,10 @@ windows = " "
 osx = " "
 linux = " "
 kali = " "
+vagrant_hosts = {"windows": windows, "osx": osx, "linux": linux, "kali": kali}
 
 # banners for metta
-banner = '''
+banner = r'''
    _____          __    __
   /     \   _____/  |__/  |______
  /  \ /  \_/ __ \   __\   __\__  \
@@ -45,7 +46,7 @@ banner = '''
         \/     \/                \/
 '''
 
-banner2 = '''
+banner2 = r'''
 
  __   __  _______  _______  _______  _______
 |  |_|  ||       ||       ||       ||   _   |
@@ -114,96 +115,31 @@ def run_uuid(ioc_filename):
             for x in range(1, len(purple)+1):
                 purple_actions.append(raw_ioc.get('meta').get('purple_actions').get(x))
 
-            if rule_os == "windows":
-                print("OS matched Windows...sending to the windows vagrant")
-                for action in purple_actions:
-                    print("Running: {}".format(action))
-                    timenow = datetime.datetime.utcnow()
-                    date = timenow.strftime('%Y-%m-%d')
-                    hourminsec = timenow.strftime('%H:%M:%S')
-                    time_to_log = date+" "+hourminsec
-                    try:
-                        vagrant = runcmd_nodb_win.delay(action, rule_name, rule_uuid, windows)
-                        data = json.dumps({'time': time_to_log, 'rule_name': rule_name, 'action': action, 'mitre_attack_phase': mitre_phase, 'mitre_attack_technique': mitre_tech, 'host': windows})
-                        logging.info(data)
-                        write_row(time_to_log, rule_name, action, mitre_phase, mitre_tech, windows)
+            for action in purple_actions:
+                print("Running: {}".format(action))
+                timenow = datetime.datetime.utcnow()
+                date = timenow.strftime('%Y-%m-%d')
+                hourminsec = timenow.strftime('%H:%M:%S')
+                time_to_log = date + " " + hourminsec
+                host_os = vagrant_hosts.get(rule_os)
+                if not host_os:
+                    print('Received unknown OS')
+                    return
+                try:
+                    vagrant = runcmd_nodb_win.delay(action, rule_name, rule_uuid, host_os)
+                    data = json.dumps({'time': time_to_log, 'rule_name': rule_name, 'action': action, 'mitre_attack_phase': mitre_phase, 'mitre_attack_technique': mitre_tech, 'host': host_os})
+                    logging.info(data)
+                    write_row(time_to_log, rule_name, action, mitre_phase, mitre_tech, host_os)
 
-                        '''
-                        # if you want to post to slack uncomment this and set the slack hook above
-                        json = {'text': "Automated Purple Team --> Simulation: {} | Action: {}  | Host: {} | Execution Time: {} UTC".format(rule_name,action,windows,datetime.datetime.utcnow())}
-                        post_to_slack(hook,json)
-                        '''
-                        time.sleep(randint(2, 30))
-                    except Exception as e:
-                        print(e)
+                    '''
+                    # if you want to post to slack uncomment this and set the slack hook above
+                    json = {'text': "Automated Purple Team --> Simulation: {} | Action: {}  | Host: {} | Execution Time: {} UTC".format(rule_name,action,windows,datetime.datetime.utcnow())}
+                    post_to_slack(hook,json)
+                    '''
+                    time.sleep(randint(2, 30))
+                except Exception as e:
+                    print(e)
 
-            elif rule_os == "osx":
-                print("OS matched OSX...sending to the OSX vagrant")
-                for action in purple_actions:
-                    print("Running: {}".format(action))
-                    timenow = datetime.datetime.utcnow()
-                    date = timenow.strftime('%Y-%m-%d')
-                    hourminsec = timenow.strftime('%H:%M:%S')
-                    time_to_log = date+" "+hourminsec
-                    try:
-                        vagrant = runcmd_nodb_osx.delay(action, rule_name, rule_uuid, osx)
-                        data = json.dumps({'time': time_to_log, 'rule_name': rule_name, 'action': action, 'mitre_attack_phase': mitre_phase, 'mitre_attack_technique': mitre_tech, 'host': osx})
-                        logging.info(data)
-                        write_row(time_to_log, rule_name, action, mitre_phase, mitre_tech, osx)
-                        '''
-                        # if you want to post to slack uncomment this and set the slack hook above
-                        json = {'text': "Automated Purple Team --> Simulation: {} | Action: {}  | Host: {} | Execution Time: {} UTC".format(rule_name,action,osx,datetime.datetime.utcnow())}
-                        post_to_slack(hook,json)
-                        '''
-                        time.sleep(randint(2, 30))
-                    except Exception as e:
-                        print(e)
-
-            elif rule_os == "linux":
-                print("OS matched Linux...sending to the Linux vagrant")
-                for action in purple_actions:
-                    print("Running: {}".format(action))
-                    timenow = datetime.datetime.utcnow()
-                    date = timenow.strftime('%Y-%m-%d')
-                    hourminsec = timenow.strftime('%H:%M:%S')
-                    time_to_log = date+" "+hourminsec
-                    try:
-                        vagrant = runcmd_nodb_linux.delay(action, rule_name, rule_uuid, linux)
-                        data = json.dumps({'time': time_to_log, 'rule_name': rule_name, 'action': action, 'mitre_attack_phase': mitre_phase, 'mitre_attack_technique': mitre_tech, 'host': linux})
-                        logging.info(data)
-                        write_row(time_to_log, rule_name, action, mitre_phase, mitre_tech, linux)
-                        '''
-                        # if you want to post to slack uncomment this and set the slack hook above
-                        json = {'text': "Automated Purple Team --> Simulation: {} | Action: {}  | Host: {} | Execution Time: {} UTC".format(rule_name,action,osx,datetime.datetime.utcnow())}
-                        post_to_slack(hook,json)
-                        '''
-                        time.sleep(randint(2, 30))
-                    except Exception as e:
-                        print(e)
-
-            elif rule_os == "kali":
-                print("OS matched Kali...sending to the Kali Linux vagrant")
-                for action in purple_actions:
-                    print("Running: {}".format(action))
-                    timenow = datetime.datetime.utcnow()
-                    date = timenow.strftime('%Y-%m-%d')
-                    hourminsec = timenow.strftime('%H:%M:%S')
-                    time_to_log = date+" "+hourminsec
-                    try:
-                        vagrant = runcmd_nodb_kali.delay(action, rule_name, rule_uuid, kali)
-                        data = json.dumps({'time': time_to_log, 'rule_name': rule_name, 'action': action, 'mitre_attack_phase': mitre_phase, 'mitre_attack_technique': mitre_tech, 'host': kali})
-                        logging.info(data)
-                        write_row(time_to_log, rule_name, action, mitre_phase, mitre_tech, kali)
-                        '''
-                        #if you want to post to slack uncomment this and set the slack hook above
-                        #json = {'text': "Automated Purple Team --> Simulation: {} | Action: {}  | Host: {} | Execution Time: {} UTC".format(rule_name,action,osx,datetime.datetime.utcnow())}
-                        #post_to_slack(hook,json)
-                        '''
-                        time.sleep(randint(2, 30))
-                    except Exception as e:
-                        print(e)
-            else:
-                print("I received an unknown OS")
     except KeyboardInterrupt:
         print("CTRL-C received, exiting...")
     except Exception as e:
