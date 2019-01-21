@@ -34,7 +34,7 @@ windows = " "
 osx = " "
 linux = " "
 kali = " "
-vagrant_hosts = {"windows": windows, "osx": osx, "linux": linux, "kali": kali}
+vagrant_hosts = {"windows": None, "osx": None, "linux": None, "kali": None}
 
 # banners for metta
 banner = r'''
@@ -122,6 +122,7 @@ def run_uuid(ioc_filename):
                 hourminsec = timenow.strftime('%H:%M:%S')
                 time_to_log = date + " " + hourminsec
                 host_os = vagrant_hosts.get(rule_os)
+                print(host_os)
                 if not host_os:
                     print('Received unknown OS')
                     return
@@ -196,6 +197,12 @@ def main():
     global kali
     kali = config.get('vms', 'kali')
 
+    global vagrant_hosts
+    vagrant_hosts['windows'] = windows
+    vagrant_hosts['osx'] = osx
+    vagrant_hosts['linux'] = linux
+    vagrant_hosts['kali'] = kali
+
     global console_output
     console_log_output = config.get('console_log_output', 'enabled')
 
@@ -212,8 +219,6 @@ def main():
         console.setFormatter(formatter)
         # add the handler to the root logger
         logging.getLogger('').addHandler(console)
-    else:
-        ''
 
     parse_yaml(args.simfile)
 
